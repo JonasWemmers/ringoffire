@@ -10,7 +10,7 @@ import { collection } from 'firebase/firestore';
 })
 export class AppComponent {
   title = 'ringoffire';
-  item$: Observable<[]>;
+  item$: Observable<{}[]>;
   firestore: Firestore = inject(Firestore);
 
   constructor() {

@@ -40,7 +40,7 @@ import { provideFirestore,getFirestore } from '@angular/fire/firestore';
     MatIconModule,
     FormsModule,
     MatFormFieldModule,
-    BrowserAnimationsModule
+    BrowserAnimationsModule,
     provideFirebaseApp(() => initializeApp(environment.firebase)),
     provideFirestore(() => getFirestore())
   ],
