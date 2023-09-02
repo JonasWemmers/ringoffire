@@ -12,9 +12,10 @@ export class AppComponent {
   title = 'ringoffire';
   item$: Observable<{}[]>;
   firestore: Firestore = inject(Firestore);
+  
 
   constructor() {
-    const itemCollection = collection(this.firestore, 'items');
+    const itemCollection = collection(this.firestore, 'games');
     this.item$ = collectionData(itemCollection);
   }
 }
