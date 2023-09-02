@@ -1,12 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Game } from 'src/models/game';
-import {MatDialog} from '@angular/material/dialog';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
-import { Firestore, collectionData } from '@angular/fire/firestore';
-import { Observable } from 'rxjs';
-import { collection } from 'firebase/firestore';
-import { Subscription } from 'rxjs';
-
+import { MatDialog } from '@angular/material/dialog';
+import { Firestore, collection, doc, getDoc } from '@angular/fire/firestore';
+import { Observable, Subscription } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-game',
@@ -17,28 +15,69 @@ export class GameComponent implements OnInit {
   pickCardAnimation = false;
   currentCard: string = '';
   game: Game = new Game();
-  private subscription: Subscription | undefined;
+  Firestore: Firestore = inject(Firestore);
+  item$: Observable<{}[]>;
+  itemSubscription: Subscription | null = null;
+  gameId: string | undefined;
 
   constructor(
-    public dialog: MatDialog,
-    private firestore: Firestore
-  ) {}
-
-  ngOnInit(): void {
-    this.newGame();
-    this.subscribeToGameData();
+    private route: ActivatedRoute,
+    private firestore: Firestore,
+    public dialog: MatDialog
+  ) {
+    this.item$ = new Observable<{}[]>();
   }
 
-  private subscribeToGameData() {
-    const itemCollection = this.firestore.collection('games');
-    this.subscription = itemCollection.valueChanges().subscribe((data: any[]) => {
-      console.log(data);
+  ngOnInit(): void {
+    this.route.params.subscribe((params) => {
+      this.gameId = params['id'];
+
+      if (this.gameId) {
+        this.loadGame(this.gameId);
+      }
     });
+  }
+
+  async loadGame(gameId: string | undefined) {
+    if (!gameId) {
+      console.log('Spiel-ID ist nicht definiert');
+      return;
+    }
+
+    // Verwende die Firestore-Instanz und den Namen der Collection
+    const itemCollection = collection(this.firestore, 'games');
+
+    // Erstelle eine Referenz auf das spezifische Spiel-Dokument
+    const gameRef = doc(itemCollection, gameId);
+
+    // Holen Sie die Daten des spezifischen Spiels
+    const gameSnap = await getDoc(gameRef);
+
+    if (gameSnap.exists()) {
+      const gameData = gameSnap.data();
+      console.log('Spiel Infos', gameData);
+    } else {
+      console.log('Spiel nicht gefunden');
+    }
   }
 
   newGame() {
     this.game = new Game();
-    console.log(this.game);
+   
+    // Verweise auf die Firestore-Collection 'games'
+    const itemCollection = collection(this.firestore, 'games');
+  
+    // Holen Sie die JSON-Daten aus Ihrem Spielobjekt
+    const gameData = this.game.toJson();
+  
+    // Füge die JSON-Daten zur Firestore-Collection hinzu
+    //addDoc(itemCollection, gameData)
+    // .then((docRef) => {
+     //   console.log('Spiel wurde erfolgreich hinzugefügt mit ID:', docRef.id);
+     // })
+    //  .catch((error) => {
+    //    console.error('Fehler beim Hinzufügen des Spiels:', error);
+    //  });
   }
 
   takeCard() {
