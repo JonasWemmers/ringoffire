@@ -2,9 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Game } from 'src/models/game';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { MatDialog } from '@angular/material/dialog';
-import { Firestore, collection, doc, getDoc } from '@angular/fire/firestore';
+import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
+import { collection } from 'firebase/firestore';
 
 @Component({
   selector: 'app-game',
