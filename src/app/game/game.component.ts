@@ -5,7 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Firestore, doc, getDoc } from '@angular/fire/firestore';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { collection } from 'firebase/firestore';
+import { addDoc, collection, setDoc } from 'firebase/firestore';
 
 @Component({
   selector: 'app-game',
@@ -32,12 +32,13 @@ export class GameComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe((params) => {
       this.gameId = params['id'];
-
+  
       if (this.gameId) {
         this.loadGame(this.gameId);
       }
     });
   }
+  
 
   async loadGame(gameId: string | undefined) {
     if (!gameId) {
@@ -64,36 +65,28 @@ export class GameComponent implements OnInit {
 
   newGame() {
     this.game = new Game();
-   
-    // Verweise auf die Firestore-Collection 'games'
-    const itemCollection = collection(this.firestore, 'games');
-  
-    // Holen Sie die JSON-Daten aus Ihrem Spielobjekt
-    const gameData = this.game.toJson();
-  
-    // Füge die JSON-Daten zur Firestore-Collection hinzu
-    //addDoc(itemCollection, gameData)
-    // .then((docRef) => {
-     //   console.log('Spiel wurde erfolgreich hinzugefügt mit ID:', docRef.id);
-     // })
-    //  .catch((error) => {
-    //    console.error('Fehler beim Hinzufügen des Spiels:', error);
-    //  });
   }
 
-  takeCard() {
-    if(!this.pickCardAnimation){
-    this.currentCard = this.game.stack.pop() as string;
-    this.pickCardAnimation = true;
-
-    this.game.currentPlayer++;
-    this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
-    setTimeout(()=>{
+  async takeCard() {
+    if (!this.pickCardAnimation) {
+      this.currentCard = this.game.stack.pop() as string;
+      this.pickCardAnimation = true;
+  
+      this.game.currentPlayer++;
+      this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
+      
+      // Fügen Sie die gezogene Karte zur gespielten Kartenliste hinzu
       this.game.playedCards.push(this.currentCard);
-      this.pickCardAnimation = false;
-    }, 1000);
+  
+      // Speichern Sie das aktualisierte Spiel
+      await this.saveGame();
+  
+      setTimeout(() => {
+        this.pickCardAnimation = false;
+      }, 1000);
+    }
   }
-  }  
+  
 
   openDialog(): void {
     const dialogRef = this.dialog.open(DialogAddPlayerComponent);
@@ -101,7 +94,45 @@ export class GameComponent implements OnInit {
     dialogRef.afterClosed().subscribe((name: string) => {
       if(name && name.length > 0){
       this.game.players.push(name);
+      this.saveGame();
     }
     });
   }
+
+  async saveGame() {
+    if (!this.gameId) {
+      console.error('Spiel-ID ist nicht definiert');
+      return;
+    }
+  
+    try {
+      // Verweise auf die Firestore-Collection 'games'
+      const itemCollection = collection(this.firestore, 'games');
+  
+      // Erstelle eine Referenz auf das spezifische Spiel-Dokument
+      const gameRef = doc(itemCollection, this.gameId);
+  
+      // Holen Sie die aktuellen Daten des spezifischen Spiels
+      const gameSnap = await getDoc(gameRef);
+  
+      if (gameSnap.exists()) {
+        // Aktualisieren Sie die JSON-Daten des Spiels mit den neuen Spielinformationen
+        const updatedGameData = {
+          ...gameSnap.data(),
+          players: this.game.players, // Aktualisieren Sie die Spielerliste hier entsprechend
+          // Fügen Sie andere aktualisierte Spielinformationen hinzu
+        };
+  
+        // Aktualisieren Sie das Dokument in der Firestore-Collection
+        await setDoc(gameRef, updatedGameData);
+  
+        console.log('Spiel erfolgreich aktualisiert');
+      } else {
+        console.log('Spiel nicht gefunden');
+      }
+    } catch (error) {
+      console.error('Fehler beim Speichern des Spiels:', error);
+    }
+  }
+  
 }
