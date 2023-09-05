@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { addDoc, collection } from 'firebase/firestore';
+//import { addDoc, collection } from 'firebase/firestore';
 import { Router } from '@angular/router';
-import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+import { Firestore, doc, getDoc, addDoc, collection } from '@angular/fire/firestore';
 import { Game } from 'src/models/game';
 
 @Component({

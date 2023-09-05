@@ -2,10 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Game } from 'src/models/game';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { MatDialog } from '@angular/material/dialog';
-import { Firestore, doc, getDoc } from '@angular/fire/firestore';
+import { Firestore, doc, getDoc, addDoc, collection, setDoc } from '@angular/fire/firestore';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { addDoc, collection, setDoc } from 'firebase/firestore';
+//import { addDoc, collection, setDoc } from 'firebase/firestore';
 
 @Component({
   selector: 'app-game',
@@ -70,6 +70,7 @@ export class GameComponent implements OnInit {
   async takeCard() {
     if (!this.pickCardAnimation) {
       this.currentCard = this.game.stack.pop() as string;
+      await this.saveGame();
       this.pickCardAnimation = true;
   
       this.game.currentPlayer++;
@@ -78,12 +79,12 @@ export class GameComponent implements OnInit {
       // Fügen Sie die gezogene Karte zur gespielten Kartenliste hinzu
       this.game.playedCards.push(this.currentCard);
   
-      // Speichern Sie das aktualisierte Spiel
-      await this.saveGame();
-  
       setTimeout(() => {
         this.pickCardAnimation = false;
       }, 1000);
+
+      // Speichern Sie das aktualisierte Spiel
+      await this.saveGame();
     }
   }
   
@@ -119,7 +120,10 @@ export class GameComponent implements OnInit {
         // Aktualisieren Sie die JSON-Daten des Spiels mit den neuen Spielinformationen
         const updatedGameData = {
           ...gameSnap.data(),
-          players: this.game.players, // Aktualisieren Sie die Spielerliste hier entsprechend
+          // Aktualisieren Sie die Spielerliste hier entsprechend
+          players: this.game.players,
+          // Aktualisieren Sie die gespielten Karten hier entsprechend
+          playedCards: this.game.playedCards, 
           // Fügen Sie andere aktualisierte Spielinformationen hinzu
         };
   
