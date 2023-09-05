@@ -13,8 +13,7 @@ import { ActivatedRoute } from '@angular/router';
   styleUrls: ['./game.component.scss']
 })
 export class GameComponent implements OnInit {
-  pickCardAnimation = false;
-  currentCard: string = '';
+
   game: Game = new Game();
   Firestore: Firestore = inject(Firestore);
   item$: Observable<{}[]>;
@@ -68,19 +67,19 @@ export class GameComponent implements OnInit {
   }
 
   async takeCard() {
-    if (!this.pickCardAnimation) {
-      this.currentCard = this.game.stack.pop() as string;
+    if (!this.game.pickCardAnimation) {
+      this.game.currentCard = this.game.stack.pop() as string;
       await this.saveGame();
-      this.pickCardAnimation = true;
+      this.game.pickCardAnimation = true;
   
       this.game.currentPlayer++;
       this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
       
       // Fügen Sie die gezogene Karte zur gespielten Kartenliste hinzu
-      this.game.playedCards.push(this.currentCard);
+      this.game.playedCards.push(this.game.currentCard);
   
       setTimeout(() => {
-        this.pickCardAnimation = false;
+        this.game.pickCardAnimation = false;
       }, 1000);
 
       // Speichern Sie das aktualisierte Spiel
@@ -125,6 +124,8 @@ export class GameComponent implements OnInit {
           // Aktualisieren Sie die gespielten Karten hier entsprechend
           playedCards: this.game.playedCards, 
           // Fügen Sie andere aktualisierte Spielinformationen hinzu
+          pickCardAnimation: this.game.pickCardAnimation, 
+          currentCard: this.game.currentCard, 
         };
   
         // Aktualisieren Sie das Dokument in der Firestore-Collection
