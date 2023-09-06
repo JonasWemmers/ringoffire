@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Game } from 'src/models/game';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { MatDialog } from '@angular/material/dialog';
-import { Firestore, doc, getDoc, addDoc, collection, setDoc } from '@angular/fire/firestore';
+import { Firestore, doc, getDoc, addDoc, collection, setDoc, onSnapshot } from '@angular/fire/firestore';
 import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 //import { addDoc, collection, setDoc } from 'firebase/firestore';
@@ -26,9 +26,7 @@ export class GameComponent implements OnInit {
     public dialog: MatDialog
   ) {
     this.item$ = new Observable<{}[]>();
-  }
 
-  ngOnInit(): void {
     this.route.params.subscribe((params) => {
       this.gameId = params['id'];
   
@@ -36,6 +34,34 @@ export class GameComponent implements OnInit {
         this.loadGame(this.gameId);
       }
     });
+
+    const itemCollection = collection(this.firestore, 'games');
+
+    if(this.gameId) {
+      const gameRef = doc(itemCollection, this.gameId);
+
+      onSnapshot(gameRef, (gameSnap) => {
+        if(gameSnap.exists()) {
+          const gameData = gameSnap.data() as Game;
+          
+           // Aktualisiere die local `this.game` mit den neuesten Daten aus der Datenbank
+           this.game.players = gameData.players.concat();
+           this.game.playedCards = gameData.playedCards.concat();
+           this.game.pickCardAnimation = gameData.pickCardAnimation;
+           this.game.currentCard = gameData.currentCard;
+
+          console.log(gameData)
+          console.log('Spiel wird automatisch aktualisiert', this.game);
+          
+        } else {
+          console.log('Spiel nicht gefunden');
+        }
+      });
+    }
+  }
+
+  ngOnInit(): void {
+    
   }
   
 
@@ -56,6 +82,7 @@ export class GameComponent implements OnInit {
 
     if (gameSnap.exists()) {
       const gameData = gameSnap.data();
+      
       console.log('Spiel Infos', gameData);
     } else {
       console.log('Spiel nicht gefunden');
@@ -116,6 +143,7 @@ export class GameComponent implements OnInit {
       const gameSnap = await getDoc(gameRef);
   
       if (gameSnap.exists()) {
+        
         // Aktualisieren Sie die JSON-Daten des Spiels mit den neuen Spielinformationen
         const updatedGameData = {
           ...gameSnap.data(),
@@ -126,7 +154,11 @@ export class GameComponent implements OnInit {
           // Fügen Sie andere aktualisierte Spielinformationen hinzu
           pickCardAnimation: this.game.pickCardAnimation, 
           currentCard: this.game.currentCard, 
+          
         };
+        const gameData = gameSnap.data();
+        console.log('Spiel Infos', gameData);
+        
   
         // Aktualisieren Sie das Dokument in der Firestore-Collection
         await setDoc(gameRef, updatedGameData);
