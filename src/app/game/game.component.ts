@@ -95,9 +95,11 @@ export class GameComponent implements OnInit {
 
   async takeCard() {
     if (!this.game.pickCardAnimation) {
+      
       this.game.currentCard = this.game.stack.pop() as string;
       await this.saveGame();
       this.game.pickCardAnimation = true;
+      
   
       this.game.currentPlayer++;
       this.game.currentPlayer = this.game.currentPlayer % this.game.players.length;
@@ -113,6 +115,7 @@ export class GameComponent implements OnInit {
       await this.saveGame();
     }
   }
+
   
 
   openDialog(): void {
